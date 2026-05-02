@@ -232,3 +232,58 @@ def emoji_helper(selected_user, df):
                             columns=['emoji', 'count'])
 
     return emoji_df
+
+def generate_insights(df):
+    insights = []
+
+    df = df[df['user'] != 'group_notification']
+
+    if df.empty:
+        return ["Not enough data"]
+
+    # Most active user
+    most_active = df['user'].value_counts().idxmax()
+    insights.append(f"Most active user: {most_active}")
+
+    # Peak day
+    peak_day = df['day_name'].value_counts().idxmax()
+    insights.append(f"Peak activity day: {peak_day}")
+
+    # Peak month
+    peak_month = df['month'].value_counts().idxmax()
+    insights.append(f"Peak activity month: {peak_month}")
+
+    # Avg messages per day
+    avg_msgs = df.groupby('only_date').size().mean()
+    insights.append(f"Average messages per day: {round(avg_msgs)}")
+
+    return insights
+
+
+def sentiment_timeline(selected_user, df):
+    if selected_user != 'Overall':
+        df = df[df['user'] == selected_user]
+
+    analyzer = SentimentIntensityAnalyzer()
+
+    scores = []
+    dates = []
+
+    for _, row in df.iterrows():
+        msg = row['message']
+        if isinstance(msg, str):
+            score = analyzer.polarity_scores(msg)['compound']
+            scores.append(score)
+            dates.append(row['only_date'])
+
+    if len(scores) == 0:
+        return pd.DataFrame(columns=['date', 'sentiment'])
+
+    temp_df = pd.DataFrame({'date': dates, 'sentiment': scores})
+    return temp_df.groupby('date')['sentiment'].mean().reset_index()
+
+def get_top_influencer(metrics):
+    pagerank = metrics.get('pagerank', {})
+    if not pagerank:
+        return None
+    return max(pagerank, key=pagerank.get)

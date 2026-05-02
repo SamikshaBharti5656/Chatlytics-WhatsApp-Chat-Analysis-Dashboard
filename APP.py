@@ -139,7 +139,51 @@ if uploaded_file is not None:
 
         # Emoji analysis
         st.title("Emoji Analysis")
+        # Emoji analysis
+        st.title("Emoji Analysis")
         emoji_df = helper.emoji_helper(selected_user, df)
+
+        if not emoji_df.empty:
+            st.dataframe(emoji_df)
+        else:
+            st.info("No emojis found in the selected messages")
+
+
+        # ================== KEY INSIGHTS ==================
+        st.markdown("---")
+        st.title(" Key Insights")
+
+        insights = helper.generate_insights(df)
+
+        for i in insights:
+            st.write("•", i)
+
+
+        # ================== SENTIMENT ==================
+        st.markdown("---")
+        st.title(" Sentiment Trend")
+
+        sentiment_df = helper.sentiment_timeline(selected_user, df)
+
+        if not sentiment_df.empty:
+            fig, ax = plt.subplots()
+            ax.plot(sentiment_df['date'], sentiment_df['sentiment'])
+            plt.xticks(rotation='vertical')
+            st.pyplot(fig)
+        else:
+            st.info("Not enough data for sentiment analysis")
+
+
+        # ================== TOPIC MODELING ==================
+        st.markdown("---")
+        st.title("Topic Modeling")
+
+        try:
+            topics = helper.topic_modeling(selected_user, df)
+            for t in topics:
+                st.write("•", t)
+        except:
+            st.info("Not enough data for topic modeling")
         
         if not emoji_df.empty:
             st.dataframe(emoji_df)
@@ -215,7 +259,7 @@ if uploaded_file is not None:
                 # Advanced detection toggle
                 st.markdown("---")
                 use_advanced = st.checkbox(
-                    "🚀 Use Advanced Detection",
+                    "Use Advanced Detection",
                     value=True,
                     help="Uses sophisticated algorithms including Q&A detection, topic clustering, and contextual analysis"
                 )
@@ -261,7 +305,10 @@ if uploaded_file is not None:
                     else:
                         # Compute metrics
                         metrics, communities = network_helper.compute_graph_metrics(G, G_undirected)
-                        
+                        top_influencer = helper.get_top_influencer(metrics)
+
+                        if top_influencer:
+                            st.write(f"Top Influencer: {top_influencer}")
                         # Get insights
                         insights = network_helper.get_network_insights(G, metrics, communities)
                         
